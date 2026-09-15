@@ -218,4 +218,4 @@ __marimo__/
 .streamlit/secrets.toml
 
 # Ignore project data folder
-project 1 data/
+project_1_ANSC_4040_dataset.csv
