@@ -47,6 +47,26 @@ Using Python in the Jupyter Notebook, I will identify:
 * Whether missing data occur during particular lactations or stages of lactation.
 * Whether there are patterns in when or where missing observations occur.
 
+Data Cleaning and Preprocessing:
+
+Before modeling, the dataset will be examined to identify data-quality problems that could interfere with the analysis.
+
+The cleaning process will include:
+
+Missing values (N/As)
+Observations containing N/A values will initially be identified and excluded from the clean dataset used to train models. The original data will be preserved so that models can later be tested for their ability to predict missing values.
+
+Zero values
+Zero values will be examined to determine whether they represent legitimate measurements or missing/invalid observations. Invalid zeros will be excluded from the training dataset.
+
+Repeated observations
+Exact or inappropriate duplicate observations will be identified and removed so that repeated records do not artificially influence the models.
+
+Outlier detection using Z-scores
+Numerical variables will be standardized using Z-scores to identify unusually large or small observations. A starting threshold such as |Z| > 3 will be used to flag potential outliers. Flagged observations will be examined before exclusion so that biologically plausible extreme values are not automatically removed.
+
+The result will be a clean dataset containing observations that can be used as reliable examples during model training.
+
 This will help determine whether the missing information can be recovered directly or needs to be predicted.
 
 ### 2. Separate Identification and Prediction Problems
@@ -111,21 +131,59 @@ Potential approaches include:
 
 Different approaches will be compared based on their ability to recover information that is already known in complete records.
 
+Modeling Strategy for late stage project:
+
+Multiple approaches will be tested rather than relying on a single method.
+
+ Clustering
+
+A clustering approach will be used to determine whether cows or milking sessions naturally separate into groups based on characteristics such as:
+
+Lactation number
+
+Days in Milk
+
+Milk yield
+
+Milk flow
+
+Session duration
+
+Reproduction status
+
+Clusters may help identify cows with similar production patterns. If an observation has missing information, its cluster membership and similarity to other cows within that cluster may provide useful information for estimating the missing value.
+
+ Model Tree
+
+A tree-based model will be tested to determine whether combinations of known cow characteristics can predict variables that are missing or unassigned.
+
+Tree-based approaches may be useful because relationships among lactation, Days in Milk, milk production, reproduction status, and milking characteristics may be nonlinear.
+
+Model performance and interpretability will be evaluated to determine whether the resulting decision structure provides biologically meaningful predictions.
+
+Missing-Data Prediction Model
+
+The primary modeling objective will be to determine whether known information about a cow can be used to predict information that is missing.
+
+For example, complete observations can be used to simulate the missing-data problem by intentionally hiding a known value. The model will then attempt to predict that value using the remaining variables.
+
+This allows model predictions to be compared against the true known values, providing a direct way to measure whether the approach is accurate enough to use on genuinely missing observations.
+
+Different algorithms can be compared depending on whether the missing variable is numerical or categorical.
+
 ### 6. Testing and Validation
 
-To test the methods, I will use complete observations where the true values are already known.
+The cleaned, complete observations will be divided using a 70/20/10 split:
 
-For example, I can intentionally hide `AnimalNumber` from a sample of complete records:
+70% Training Set — Used to train the models.
 
-`Complete Record → Hide AnimalNumber → Run Model → Predicted AnimalNumber → Compare with True AnimalNumber`
+20% Validation Set — Used to compare models, tune parameters, select variables, and make modeling decisions.
 
-The same process can be performed for other variables:
+10% Test Set — Held completely separate until the final model has been selected and used to estimate how well the approach performs on unseen data.
 
-`Known Value → Artificially Make it Missing → Predict Value → Compare Prediction with Known Value`
+The split should be performed before model development to reduce the risk of data leakage.
 
-This will allow me to calculate how accurately each method recovers missing information before using it on records where the true answer is unknown.
-
-For cow identification and categorical variables, performance could be evaluated using measures such as **percent correctly classified**. For continuous variables such as milk flow or session duration, prediction error can be measured by comparing predicted and actual values.
+If multiple observations come from the same cow, splitting individual rows randomly could place records from one cow in both the training and test sets. Therefore, when possible, the split will be performed at the cow level using AnimalNumber, so that all observations from a particular cow remain in only one partition. This will provide a more realistic test of whether the model generalizes to cows it has not previously seen.
 
 ### 7. Data Lineage
 
